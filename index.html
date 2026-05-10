@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiveNotes — Документы</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <span class="logo">Документы</span>
+      <span id="status"></span>
+    </header>
+    <main>
+      <section id="docs">
+        <div id="docs-sidebar-backdrop" class="docs-sidebar-backdrop"></div>
+        <aside class="docs-sidebar">
+          <div class="docs-ws-switcher">
+            <select id="docs-ws-select" title="Воркспейс"></select>
+            <button id="new-ws-btn" title="Создать воркспейс">+</button>
+          </div>
+          <div class="docs-sidebar-toolbar">
+            <button id="new-doc-btn" title="Создать страницу">+ Новая страница</button>
+          </div>
+          <div class="docs-search">
+            <input id="docs-search-input" type="search" placeholder="Поиск..." autocomplete="off">
+          </div>
+          <div id="docs-tree"><div class="hint">Загрузка…</div></div>
+        </aside>
+        <div class="docs-content">
+          <div class="docs-content-header">
+            <button id="docs-sidebar-toggle" class="docs-sidebar-toggle" title="Меню" aria-label="Меню">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+            </button>
+            <input id="doc-title" class="doc-title" placeholder="Без названия" disabled>
+            <select id="doc-kind-select" class="doc-kind-select" title="Тип страницы" disabled>
+              <option value="page">📄 Простая</option>
+              <option value="change_map">🗺 Карта</option>
+              <option value="project_root">📦 Проект</option>
+              <option value="website_base">🌐 Сайт</option>
+            </select>
+            <input id="doc-slug-input" class="doc-slug-input" type="text" placeholder="slug" pattern="[a-z0-9-]{1,64}" title="slug: a-z, 0-9, -" maxlength="64" autocomplete="off" disabled hidden>
+            <span id="docs-status" class="docs-status"></span>
+            <button id="docs-mic-btn" class="docs-mic-btn" title="Голосовой ввод (микрофон)" disabled>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <button id="docs-new-child-btn" class="docs-new-child-btn" title="Создать подстраницу" disabled>+ Подстраница</button>
+            <button id="docs-delete-btn" class="docs-delete-btn" title="Удалить страницу" disabled>Удалить</button>
+            <button id="docs-actions-btn" class="docs-actions-btn" title="Действия" aria-label="Действия">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>
+            </button>
+            <div id="docs-actions-menu" class="docs-actions-menu" style="display:none">
+              <button data-action="mic">🎤 Голосовой ввод</button>
+              <button data-action="child">+ Подстраница</button>
+              <div class="docs-actions-section">Тип</div>
+              <button data-action="kind" data-kind="page">📄 Простая</button>
+              <button data-action="kind" data-kind="change_map">🗺 Карта</button>
+              <button data-action="kind" data-kind="project_root">📦 Проект</button>
+              <button data-action="kind" data-kind="website_base">🌐 Сайт</button>
+              <button data-action="delete" class="danger">Удалить</button>
+            </div>
+          </div>
+          <div class="docs-content-scroll">
+            <div id="docs-editor" class="docs-editor"></div>
+            <div id="docs-subpages" class="docs-subpages"></div>
+          </div>
+          <div id="docs-empty" class="docs-empty">Выберите страницу или создайте новую</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
