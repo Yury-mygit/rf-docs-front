@@ -56,6 +56,8 @@ const api = {
     apiFetch(`/docs/${id}`, { method: 'PATCH', body: JSON.stringify(data) }).then(r => r.json()),
   deleteDoc: id =>
     apiFetch(`/docs/${id}`, { method: 'DELETE' }),
+  shareDoc: id =>
+    apiFetch(`/docs/${id}/share`, { method: 'POST' }).then(r => r.json()),
   searchDocs: (q, wsId, limit = 20) => {
     const params = new URLSearchParams({ q, limit });
     if (wsId) params.set('workspaceId', wsId);
@@ -138,6 +140,7 @@ async function setCurrentWorkspace(wsId) {
     titleEl.disabled = true;
     document.getElementById('docs-delete-btn').disabled = true;
     document.getElementById('docs-new-child-btn').disabled = true;
+    document.getElementById('docs-share-btn').disabled = true;
     const kindSelectEl = document.getElementById('doc-kind-select');
     kindSelectEl.value = 'page';
     kindSelectEl.disabled = true;
@@ -203,7 +206,10 @@ const KIND_ICONS = {
   change_map: '🗺',
   project_root: '📦',
   website_base: '🌐',
+  api_contract: '📋',
 };
+
+const KINDS_WITH_SLUG = new Set(['project_root', 'api_contract']);
 
 function kindIcon(kind) {
   return KIND_ICONS[kind] || KIND_ICONS.page;
@@ -251,6 +257,7 @@ async function openDoc(id) {
     titleEl.disabled = false;
     document.getElementById('docs-delete-btn').disabled = false;
     document.getElementById('docs-new-child-btn').disabled = false;
+    document.getElementById('docs-share-btn').disabled = false;
     const kindSelectEl = document.getElementById('doc-kind-select');
     kindSelectEl.value = doc.kind || 'page';
     kindSelectEl.disabled = false;
@@ -368,6 +375,7 @@ async function deleteCurrentDoc() {
     titleEl.disabled = true;
     document.getElementById('docs-delete-btn').disabled = true;
     document.getElementById('docs-new-child-btn').disabled = true;
+    document.getElementById('docs-share-btn').disabled = true;
     const kindSelectEl = document.getElementById('doc-kind-select');
     kindSelectEl.value = 'page';
     kindSelectEl.disabled = true;
@@ -379,6 +387,97 @@ async function deleteCurrentDoc() {
     renderSubpages();
   } catch (e) {
     setStatus(`Ошибка удаления: ${e.message}`, true);
+  }
+}
+
+// ── API contract: публичная ссылка ───────────────────────────────────────────
+
+function syncContractLink(kind, slug) {
+  const wrap = document.getElementById('doc-contract-link');
+  const urlEl = document.getElementById('doc-contract-url');
+  const copyBtn = document.getElementById('doc-contract-copy');
+  const visible = kind === 'api_contract' && !!slug;
+  wrap.hidden = !visible;
+  if (visible) {
+    urlEl.value = `${location.origin}/api/v1/site/contracts/${slug}`;
+    copyBtn.textContent = 'Копировать';
+    copyBtn.classList.remove('copied');
+  }
+}
+
+async function copyContractUrl() {
+  const urlEl = document.getElementById('doc-contract-url');
+  const btn = document.getElementById('doc-contract-copy');
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(urlEl.value);
+    } else {
+      urlEl.select();
+      document.execCommand('copy');
+    }
+    btn.textContent = 'Скопировано';
+    btn.classList.add('copied');
+  } catch (e) {
+    setStatus(`Не удалось скопировать: ${e.message}`, true);
+  }
+}
+
+// ── Share ───────────────────────────────────────────────────────────────────
+
+function formatShareExpiry(ms) {
+  try {
+    return new Date(ms).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch (_) {
+    return new Date(ms).toISOString();
+  }
+}
+
+function showShareModal(url, expiresAt) {
+  const modal = document.getElementById('docs-share-modal');
+  const urlEl = document.getElementById('docs-share-url');
+  const expEl = document.getElementById('docs-share-expires');
+  const copyBtn = document.getElementById('docs-share-copy');
+  urlEl.value = url;
+  expEl.textContent = `Срок действия: до ${formatShareExpiry(expiresAt)}`;
+  copyBtn.textContent = 'Скопировать';
+  copyBtn.classList.remove('copied');
+  modal.hidden = false;
+  setTimeout(() => { urlEl.focus(); urlEl.select(); }, 0);
+}
+
+function hideShareModal() {
+  document.getElementById('docs-share-modal').hidden = true;
+}
+
+async function openShareDialog() {
+  if (!currentDocId) return;
+  await flushDocSave();
+  try {
+    const { token, expiresAt } = await api.shareDoc(currentDocId);
+    const url = `${location.origin}/api/v1/site/share/${token}`;
+    showShareModal(url, expiresAt);
+  } catch (e) {
+    setStatus(`Не удалось создать ссылку: ${e.message}`, true);
+  }
+}
+
+async function copyShareUrl() {
+  const urlEl = document.getElementById('docs-share-url');
+  const copyBtn = document.getElementById('docs-share-copy');
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(urlEl.value);
+    } else {
+      urlEl.select();
+      document.execCommand('copy');
+    }
+    copyBtn.textContent = 'Скопировано';
+    copyBtn.classList.add('copied');
+  } catch (e) {
+    setStatus(`Не удалось скопировать: ${e.message}`, true);
   }
 }
 
@@ -419,10 +518,11 @@ async function setDocKind(newKind) {
 
 function syncSlugInput(kind, slug) {
   const el = document.getElementById('doc-slug-input');
-  const isProject = kind === 'project_root';
-  el.hidden = !isProject;
-  el.disabled = !isProject || !currentDocId;
+  const allowsSlug = KINDS_WITH_SLUG.has(kind);
+  el.hidden = !allowsSlug;
+  el.disabled = !allowsSlug || !currentDocId;
   el.value = slug || '';
+  syncContractLink(kind, slug);
 }
 
 async function setDocSlug(newSlug) {
@@ -768,12 +868,14 @@ function setDocsActionsMenu(open) {
   if (open) {
     const micDisabled = document.getElementById('docs-mic-btn').disabled;
     const childDisabled = document.getElementById('docs-new-child-btn').disabled;
+    const shareDisabled = document.getElementById('docs-share-btn').disabled;
     const deleteDisabled = document.getElementById('docs-delete-btn').disabled;
     const kindSelectEl = document.getElementById('doc-kind-select');
     const kindDisabled = kindSelectEl.disabled;
     const currentKind = kindSelectEl.value;
     docsActionsMenuEl.querySelector('[data-action="mic"]').disabled = micDisabled;
     docsActionsMenuEl.querySelector('[data-action="child"]').disabled = childDisabled;
+    docsActionsMenuEl.querySelector('[data-action="share"]').disabled = shareDisabled;
     docsActionsMenuEl.querySelector('[data-action="delete"]').disabled = deleteDisabled;
     docsActionsMenuEl.querySelectorAll('button[data-kind]').forEach(b => {
       b.disabled = kindDisabled;
@@ -795,6 +897,7 @@ docsActionsMenuEl.addEventListener('click', e => {
   setDocsActionsMenu(false);
   if (action === 'mic') document.getElementById('docs-mic-btn').click();
   else if (action === 'child') document.getElementById('docs-new-child-btn').click();
+  else if (action === 'share') document.getElementById('docs-share-btn').click();
   else if (action === 'delete') document.getElementById('docs-delete-btn').click();
   else if (action === 'kind') setDocKind(btn.dataset.kind);
 });
@@ -808,10 +911,20 @@ document.getElementById('new-ws-btn').addEventListener('click', createWorkspace)
 document.getElementById('docs-ws-select').addEventListener('change', e => setCurrentWorkspace(e.target.value));
 document.getElementById('docs-delete-btn').addEventListener('click', deleteCurrentDoc);
 document.getElementById('docs-new-child-btn').addEventListener('click', createChildDoc);
+document.getElementById('docs-share-btn').addEventListener('click', openShareDialog);
+document.getElementById('docs-share-copy').addEventListener('click', copyShareUrl);
+document.getElementById('docs-share-close').addEventListener('click', hideShareModal);
+document.querySelector('#docs-share-modal .docs-modal-backdrop').addEventListener('click', hideShareModal);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !document.getElementById('docs-share-modal').hidden) {
+    hideShareModal();
+  }
+});
 document.getElementById('docs-mic-btn').addEventListener('click', onMicClick);
 document.getElementById('doc-title').addEventListener('input', onDocTitleInput);
 document.getElementById('doc-kind-select').addEventListener('change', e => setDocKind(e.target.value));
 document.getElementById('doc-slug-input').addEventListener('change', e => setDocSlug(e.target.value));
+document.getElementById('doc-contract-copy').addEventListener('click', copyContractUrl);
 document.getElementById('docs-search-input').addEventListener('input', onDocsSearchInput);
 document.body.classList.add('docs-noselection');
 document.body.classList.add('docs-on');

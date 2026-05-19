@@ -39,13 +39,20 @@
               <option value="change_map">🗺 Карта</option>
               <option value="project_root">📦 Проект</option>
               <option value="website_base">🌐 Сайт</option>
+              <option value="api_contract">📋 API контракт</option>
             </select>
             <input id="doc-slug-input" class="doc-slug-input" type="text" placeholder="slug" pattern="[a-z0-9-]{1,64}" title="slug: a-z, 0-9, -" maxlength="64" autocomplete="off" disabled hidden>
+            <div id="doc-contract-link" class="doc-contract-link" hidden>
+              <span class="doc-contract-link-label">🔗</span>
+              <input id="doc-contract-url" type="text" readonly>
+              <button id="doc-contract-copy" type="button" title="Скопировать ссылку">Копировать</button>
+            </div>
             <span id="docs-status" class="docs-status"></span>
             <button id="docs-mic-btn" class="docs-mic-btn" title="Голосовой ввод (микрофон)" disabled>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
             <button id="docs-new-child-btn" class="docs-new-child-btn" title="Создать подстраницу" disabled>+ Подстраница</button>
+            <button id="docs-share-btn" class="docs-share-btn" title="Поделиться ссылкой (24ч)" disabled>Поделиться</button>
             <button id="docs-delete-btn" class="docs-delete-btn" title="Удалить страницу" disabled>Удалить</button>
             <button id="docs-actions-btn" class="docs-actions-btn" title="Действия" aria-label="Действия">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>
@@ -53,11 +60,13 @@
             <div id="docs-actions-menu" class="docs-actions-menu" style="display:none">
               <button data-action="mic">🎤 Голосовой ввод</button>
               <button data-action="child">+ Подстраница</button>
+              <button data-action="share">🔗 Поделиться</button>
               <div class="docs-actions-section">Тип</div>
               <button data-action="kind" data-kind="page">📄 Простая</button>
               <button data-action="kind" data-kind="change_map">🗺 Карта</button>
               <button data-action="kind" data-kind="project_root">📦 Проект</button>
               <button data-action="kind" data-kind="website_base">🌐 Сайт</button>
+              <button data-action="kind" data-kind="api_contract">📋 API контракт</button>
               <button data-action="delete" class="danger">Удалить</button>
             </div>
           </div>
@@ -69,6 +78,21 @@
         </div>
       </section>
     </main>
+  </div>
+  <div id="docs-share-modal" class="docs-modal" hidden>
+    <div class="docs-modal-backdrop"></div>
+    <div class="docs-modal-card" role="dialog" aria-labelledby="docs-share-modal-title">
+      <div class="docs-modal-title" id="docs-share-modal-title">Поделиться страницей</div>
+      <p class="docs-modal-hint">Ссылка действует 24 часа. Любой, у кого есть ссылка, увидит страницу.</p>
+      <div class="docs-modal-url-row">
+        <input id="docs-share-url" type="text" readonly>
+        <button id="docs-share-copy" type="button">Скопировать</button>
+      </div>
+      <div id="docs-share-expires" class="docs-modal-expires"></div>
+      <div class="docs-modal-actions">
+        <button id="docs-share-close" type="button">Закрыть</button>
+      </div>
+    </div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>
