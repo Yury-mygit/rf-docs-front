@@ -482,7 +482,7 @@ body.docs-noselection .docs-content-scroll { display: none; }
 }
 
 .docs-subpages {
-  max-width: 880px;
+  max-width: min(100%, 1400px);
   margin: 0 auto;
   padding: 0 32px 60px;
   width: 100%;
@@ -511,7 +511,7 @@ body.docs-noselection .docs-content-scroll { display: none; }
 
 .docs-editor-loading {
   padding: 40px 32px;
-  max-width: 880px;
+  max-width: min(100%, 1400px);
   margin: 0 auto;
   color: var(--muted);
   font-size: 14px;
@@ -529,10 +529,13 @@ body.docs-noselection .docs-content-scroll { display: none; }
 }
 body.docs-noselection .docs-empty { display: flex; }
 
-/* Crepe theme overrides — soft integration */
+/* Crepe theme overrides — soft integration.
+ * TT DOCS-1: max-width расширен до 1400px cap (min(100%, 1400px)) —
+ * текст растягивается в доступную ширину, но не расползается длиннее
+ * ~90-100 символов на 21"+ мониторах. */
 .docs-editor .milkdown {
   padding: 24px 32px 60px;
-  max-width: 880px;
+  max-width: min(100%, 1400px);
   margin: 0 auto;
 }
 
